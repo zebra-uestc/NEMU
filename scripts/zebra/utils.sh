@@ -4,12 +4,12 @@
 
 set -x
 
-export NEMU_HOME=$HOME/xiangshan/NEMU
+export NEMU_HOME=$HOME/NEMU
 export NEMU=$NEMU_HOME/build/riscv64-nemu-interpreter
 export GCPT=$NEMU_HOME/resource/gcpt_restore/build/gcpt.bin
 export SIMPOINT=$NEMU_HOME/resource/simpoint/simpoint_repo/bin/simpoint
 
-export WORKLOAD_ROOT_PATH=$HOME/xiangshan/workloads/bbls
+export WORKLOAD_ROOT_PATH=$HOME/workloads/bbls
 export RESULT=$NEMU_HOME/parallel_result
 export LOG_PATH=$RESULT/logs
 export profiling_result_name=profiling
@@ -71,7 +71,7 @@ checkpoint() {
 }
 export -f checkpoint
 
-export workload_list=$NEMU_HOME/zebra_data/workload_list/single_list.txt
+export workload_list=$NEMU_HOME/scripts/zebra/workload_list/batch2_list.txt
 
 parallel_profiling() {
 	export num_threads=24
@@ -116,5 +116,3 @@ milc
 gobmk_13x13
 hmmer_nph3
 workload_list_example
-
-# profiling gcc_166
