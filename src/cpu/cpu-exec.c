@@ -45,6 +45,7 @@ static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
+extern void simpoint_profile_end_dump();
 
 #ifdef CONFIG_DEBUG
 static inline void debug_hook(vaddr_t pc, const char *asmbuf) {
@@ -715,6 +716,7 @@ void cpu_exec(uint64_t n) {
         nemu_state.halt_pc);
     Log("trap code:%d", nemu_state.halt_ret);
     monitor_statistic();
+    simpoint_profile_end_dump();
     break;
   case NEMU_QUIT:
 #ifndef CONFIG_SHARE

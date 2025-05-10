@@ -65,6 +65,8 @@ SimPoint::SimPoint()
     : intervalCount(0),
       intervalDrift(0),
       simpointStream(nullptr),
+      bbInstCountStream(nullptr),
+      bbExecTimesStream(nullptr),
       currentBBV(0, 0),
       currentBBVInstCount(0) {
 }
@@ -72,6 +74,12 @@ SimPoint::SimPoint()
 SimPoint::~SimPoint() {
   if (simpointStream)
     NEMUNS::simout.close(simpointStream);
+
+  if (bbInstCountStream)
+    NEMUNS::simout.close(bbInstCountStream);
+
+  if (bbExecTimesStream)
+    NEMUNS::simout.close(bbExecTimesStream);
 }
 
 void
@@ -81,13 +89,21 @@ SimPoint::init() {
     assert(checkpoint_interval);
     intervalSize = checkpoint_interval;
     Log("Doing simpoint profiling with interval %lu", intervalSize);
-    auto path = pathManager.getOutputPath() + "/simpoint_bbv.gz";
+    auto path = pathManager.getOutputPath();
 
     using NEMUNS::simout;
-    simpointStream = simout.create(path, false);
+    simpointStream = simout.create(path + "/simpoint_bbv.gz", false);
+    bbInstCountStream = simout.create(path + "/bb_inst_count.txt", false);
+    bbExecTimesStream = simout.create(path + "/bb_exec_times.txt", false);
 
     if (!simpointStream)
       xpanic("unable to open SimPoint profile_file %s\n", path.c_str());
+
+    if (!bbInstCountStream)
+      xpanic("unable to open SimPoint bb_inst_count_file %s\n", path.c_str());
+
+    if (!bbExecTimesStream)
+      xpanic("unable to open SimPoint bb_exec_times_file %s\n", path.c_str());
   }
 }
 
@@ -129,12 +145,16 @@ SimPoint::profile(Addr pc, bool is_control, bool is_last_uop, unsigned instr_cou
       info.id = bbMap.size() + 1;
       info.insts = currentBBVInstCount;
       info.count = currentBBVInstCount;
+      info.execute_times = 1;
+      *bbInstCountStream->stream() << std::dec << "BBV: id: " << info.id << " insts: " << info.insts 
+                              << std::hex << " address: [0x" << currentBBV.first<< " -> 0x" << currentBBV.second << "]\n";
       bbMap.insert(::std::make_pair(currentBBV, info));
     } else {
       // If basic block is seen before, just increment the count by the
       // number of insts in basic block.
       BBInfo &info = map_itr->second;
       info.count += currentBBVInstCount;
+      info.execute_times++;
     }
     currentBBVInstCount = 0;
 
@@ -167,20 +187,46 @@ SimPoint::profile(Addr pc, bool is_control, bool is_last_uop, unsigned instr_cou
   }
 }
 
+void
+SimPoint::profile_end_dump(){
+  std::vector<std::pair<uint64_t, uint64_t>> counts;
+  for (auto map_itr = bbMap.begin(); map_itr != bbMap.end(); ++map_itr) {
+    BBInfo &info = map_itr->second;
+    *bbExecTimesStream->stream() << std::dec << "BBV: id: " << info.id << " execute_times: " << info.execute_times 
+                            << std::hex << " address: [0x" << map_itr->first.first<< " -> 0x" << map_itr->first.second << "]\n";
+    if (info.count != 0) {
+      counts.push_back(std::make_pair(info.id, info.count));
+      info.count = 0;
+    }
+  }
+  std::sort(counts.begin(), counts.end());
+
+  // Print output BBV info
+  *simpointStream->stream() << "T";
+  for (auto cnt_itr = counts.begin(); cnt_itr != counts.end(); ++cnt_itr) {
+    *simpointStream->stream() << ":" << cnt_itr->first << ":" << cnt_itr->second << " ";
+  }
+  *simpointStream->stream() << "\n";
 }
 
-SimPointNS::SimPoint simpoit_obj;
+}
+
+SimPointNS::SimPoint simpoint_obj;
 
 extern "C" {
 
 void simpoint_init() {
-  simpoit_obj.init();
+  simpoint_obj.init();
+}
+
+void simpoint_profile_end_dump() {
+  simpoint_obj.profile_end_dump();
 }
 
 #ifndef CONFIG_SHARE
 void simpoint_profiling(uint64_t pc, bool is_control, uint64_t abs_instr_count) {
 #ifdef CONFIG_MEM_COMPRESS
-  simpoit_obj.profile_with_abs_icount(pc, is_control, true, abs_instr_count);
+  simpoint_obj.profile_with_abs_icount(pc, is_control, true, abs_instr_count);
 #else
   xpanic("You should enable CONFIG_MEM_COMPRESS in menuconfig");
 #endif

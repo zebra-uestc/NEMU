@@ -93,6 +93,8 @@ class SimPoint
 
     void profile_with_abs_icount(Addr pc, bool is_control, bool is_last_uop, uint64_t abs_icount);
 
+    void profile_end_dump();
+
   private:
     uint64_t lastICount{0};
     /** SimPoint profiling interval size in instructions */
@@ -104,6 +106,10 @@ class SimPoint
     uint64_t intervalDrift;
     /** Pointer to SimPoint BBV output stream */
     NEMUNS::OutputStream *simpointStream;
+    /* Number of static insts in each basic block */
+    NEMUNS::OutputStream *bbInstCountStream;
+    /** Execution times per basic block  */
+    NEMUNS::OutputStream *bbExecTimesStream;
 
     /** Basic Block information */
     struct BBInfo
@@ -114,6 +120,8 @@ class SimPoint
         uint64_t insts;
         /** Accumulated dynamic inst count executed by BB */
         uint64_t count;
+        /** Number of times this BB was executed */
+        uint64_t execute_times;
     };
 
     /** Hash table containing all previously seen basic blocks */
