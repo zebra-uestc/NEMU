@@ -118,3 +118,5 @@ milc
 gobmk_13x13
 hmmer_nph3
 workload_list_example
+
+profiling gcc_166
