@@ -23,9 +23,13 @@ profiling() {
 	log=$LOG_PATH/profiling_logs/${workload}
 	mkdir -p $log
 
+	out_dir=$PROFILING_RES/${workload}
+	mkdir -p $out_dir
+
 	$NEMU ${WORKLOAD_ROOT_PATH}/${workload}-bbl-linux-spec.bin \
 		-D $RESULT -w $workload -C $profiling_result_name \
 		-b --simpoint-profile --cpt-interval ${interval} \
+		--zebra-trace-bb-dasm $out_dir/bb_dasm.txt \
 		-r $GCPT >$log/${workload}-out.txt 2>${log}/${workload}-err.txt
 }
 export -f profiling
@@ -116,3 +120,5 @@ milc
 gobmk_13x13
 hmmer_nph3
 workload_list_example
+
+profiling gcc_166
