@@ -23,9 +23,11 @@ profiling() {
 	log=$LOG_PATH/profiling_logs/${workload}
 	mkdir -p $log
 
+	data_dir=/root/NEMU/zebra_data/${workload}
 	$NEMU ${WORKLOAD_ROOT_PATH}/${workload}-bbl-linux-spec.bin \
 		-D $RESULT -w $workload -C $profiling_result_name \
 		-b --simpoint-profile --cpt-interval ${interval} \
+		--zebra-bb-jump ${data_dir}/bb_addr_start.txt \
 		-r $GCPT >$log/${workload}-out.txt 2>${log}/${workload}-err.txt
 }
 export -f profiling
