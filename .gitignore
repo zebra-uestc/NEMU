@@ -14,6 +14,7 @@
 !scripts/checkpoint_example/*
 !scripts/zebra/**
 scripts/zebra/logs
+scripts/zebra/__pycache__
 include/config
 include/generated
 build
