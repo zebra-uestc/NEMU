@@ -222,6 +222,10 @@ config SIMPOINT_LOG
   bool "Enable Log for simpoint profiling"
   default n
 
+config ZEBRA_TRACE_BB_DASM
+  bool "Enable Log for tracing dasm of basic block"
+  default n
+
 endmenu
 
 if !MODE_USER
