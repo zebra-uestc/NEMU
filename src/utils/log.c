@@ -58,3 +58,21 @@ void log_close(){
 }
 char log_bytebuf[80] = {};
 char log_asmbuf[80] = {};
+
+#ifdef CONFIG_ZEBRA_BB_JUMP
+#define BB_ADDR_LINE_SIZE 32
+const int zebra_bb_addr_line_size = 32;
+char* zebra_bb_addr_file_path = NULL;
+FILE* zebra_bb_addr_file_fp = NULL;
+char zebra_bb_addr_line[BB_ADDR_LINE_SIZE];
+char* fgets_ret = NULL;
+uint64_t address = 0;
+
+void zebra_bb_jump_init() {
+  Assert(zebra_bb_addr_file_path, "zebra_bb_addr_file_path is NULL");
+  memset(zebra_bb_addr_line, 0, sizeof(zebra_bb_addr_line));
+  zebra_bb_addr_file_fp = fopen(zebra_bb_addr_file_path, "r");
+  Assert(zebra_bb_addr_file_fp, "Can not open '%s'", zebra_bb_addr_file_path);
+}
+
+#endif

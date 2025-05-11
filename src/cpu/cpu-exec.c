@@ -47,6 +47,14 @@ const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
 extern void simpoint_profile_end_dump();
 
+#ifdef CONFIG_ZEBRA_BB_JUMP
+extern FILE* zebra_bb_addr_file_fp;
+extern const int zebra_bb_addr_line_size;
+extern char zebra_bb_addr_line[];
+extern char* fgets_ret;
+extern uint64_t address;
+#endif
+
 #ifdef CONFIG_DEBUG
 static inline void debug_hook(vaddr_t pc, const char *asmbuf) {
   Logti("%s\n", asmbuf);
@@ -333,6 +341,21 @@ static int execute(int n) {
       break;
     if (unlikely(manual_cpt_quit))
       break;
+
+#ifdef CONFIG_ZEBRA_BB_JUMP
+    if(!workload_loaded) continue;
+    fgets_ret = fgets(zebra_bb_addr_line, zebra_bb_addr_line_size, zebra_bb_addr_file_fp);
+    if(fgets_ret == NULL) {
+      printf("fgets return NULL: Now return for NEMU_END\n");
+      nemu_state.state = NEMU_END;
+      return n;
+    }
+    sscanf(zebra_bb_addr_line, "%lx", &address);
+    printf("==> tcache_init: pc = 0x%lx\n", address);
+    extern Decode *tcache_init(const void *exec_nemu_decode, vaddr_t reset_vector);
+    s = tcache_init(&&exec_nemu_decode, address);
+    continue;
+#endif
 
     // Here is per inst action
     // Because every instruction executed goes here, don't put Log here to
