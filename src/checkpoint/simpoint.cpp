@@ -59,6 +59,12 @@ extern char *log_filebuf;
 extern uint64_t record_row_number;
 extern FILE *log_fp;
 extern bool enable_small_log;
+
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+extern FILE *zebra_trace_bb_dasm_log_fp;
+extern char zebra_trace_bb_dasm_buf[];
+extern const uint64_t zebra_trace_bb_dasm_buf_size;
+#endif
 }
 
 SimPoint::SimPoint()
@@ -149,12 +155,19 @@ SimPoint::profile(Addr pc, bool is_control, bool is_last_uop, unsigned instr_cou
       *bbInstCountStream->stream() << std::dec << "BBV: id: " << info.id << " insts: " << info.insts 
                               << std::hex << " address: [0x" << currentBBV.first<< " -> 0x" << currentBBV.second << "]\n";
       bbMap.insert(::std::make_pair(currentBBV, info));
+      if(likely(workload_loaded)) {
+        fprintf(zebra_trace_bb_dasm_log_fp, "========== basic block id: %lu ==========\n", info.id);
+        fprintf(zebra_trace_bb_dasm_log_fp, "========== executed insts: %lu ==========\n", info.insts);
+        fprintf(zebra_trace_bb_dasm_log_fp, "%s\n\n\n", zebra_trace_bb_dasm_buf);
+      }
+      memset(zebra_trace_bb_dasm_buf, 0, zebra_trace_bb_dasm_buf_size);
     } else {
       // If basic block is seen before, just increment the count by the
       // number of insts in basic block.
       BBInfo &info = map_itr->second;
       info.count += currentBBVInstCount;
       info.execute_times++;
+      memset(zebra_trace_bb_dasm_buf, 0, zebra_trace_bb_dasm_buf_size);
     }
     currentBBVInstCount = 0;
 

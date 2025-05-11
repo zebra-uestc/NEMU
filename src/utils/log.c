@@ -58,3 +58,19 @@ void log_close(){
 }
 char log_bytebuf[80] = {};
 char log_asmbuf[80] = {};
+
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+#define MAX_INST_DASM_SIZE 64
+#define MAX_BB_INST_NUM 512
+char* zebra_trace_bb_dasm_log_path = NULL;
+FILE* zebra_trace_bb_dasm_log_fp = NULL;
+char* zebra_trace_bb_dasm_buf[MAX_BB_INST_NUM * MAX_INST_DASM_SIZE];
+const uint64_t zebra_trace_bb_dasm_buf_size = MAX_BB_INST_NUM * MAX_INST_DASM_SIZE;
+
+void zebra_trace_bb_dasm_log_init() {
+  Assert(zebra_trace_bb_dasm_log_path, "zebra_trace_bb_dasm_log_path is NULL");
+  memset(zebra_trace_bb_dasm_buf, 0, zebra_trace_bb_dasm_buf_size);
+  zebra_trace_bb_dasm_log_fp = fopen(zebra_trace_bb_dasm_log_path, "w");
+  Assert(zebra_trace_bb_dasm_log_fp, "Can not open '%s'", zebra_trace_bb_dasm_log_path);
+}
+#endif

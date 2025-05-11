@@ -47,6 +47,11 @@ const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
 extern void simpoint_profile_end_dump();
 
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+  extern char zebra_trace_bb_dasm_buf[];
+  extern bool workload_loaded;
+#endif
+
 #ifdef CONFIG_DEBUG
 static inline void debug_hook(vaddr_t pc, const char *asmbuf) {
   Logti("%s\n", asmbuf);
@@ -339,6 +344,11 @@ static int execute(int n) {
     // improve performance
     def_finish();
 
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+    if(likely(workload_loaded))
+      sprintf(zebra_trace_bb_dasm_buf + strlen(zebra_trace_bb_dasm_buf),"%s\n", s->dasmbuf);
+#endif
+
     // clear for recording next inst
     is_ctrl = false;
     Logti("prev pc = 0x%lx, pc = 0x%lx", prev_s->pc, s->pc);
@@ -581,6 +591,9 @@ void fetch_decode(Decode *s, vaddr_t pc) {
         snprintf(s->logbuf, sizeof(s->logbuf), FMT_WORD ":   %s%*.s%s", s->pc,
                  log_bytebuf, 40 - (12 + 3 * (int)(s->snpc - s->pc)), "",
                  log_asmbuf));
+  IFDEF(CONFIG_ZEBRA_TRACE_BB_DASM,
+        snprintf(s->dasmbuf,
+                 sizeof(s->dasmbuf), "%s", log_asmbuf));
   s->EHelper = g_exec_table[idx];
 }
 

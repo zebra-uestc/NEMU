@@ -52,6 +52,11 @@ extern char *memory_region_record_file;
 #endif
 int is_batch_mode() { return batch_mode; }
 
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+extern char *zebra_trace_bb_dasm_log_path;
+void zebra_trace_bb_dasm_log_init();
+#endif
+
 static inline void welcome() {
   Log("Debug: \33[1;32m%s\33[0m", MUXDEF(CONFIG_DEBUG, "ON","OFF"));
   IFDEF(CONFIG_DEBUG, Log("If debug mode is on, a log file will be generated "
@@ -113,6 +118,8 @@ static inline int parse_args(int argc, char *argv[]) {
     {"simpoint-profile"   , no_argument      , NULL, 3},
     {"dont-skip-boot"     , no_argument      , NULL, 6},
     {"mem_use_record_file", required_argument, NULL, 'A'},
+     // zebra trace bb dasm
+    {"zebra-trace-bb-dasm", required_argument, NULL, 17},
     // restore cpt
     {"cpt-id"             , required_argument, NULL, 4},
 
@@ -192,6 +199,16 @@ static inline int parse_args(int argc, char *argv[]) {
         profiling_state = SimpointProfiling;
         Log("Doing Simpoint Profiling");
         break;
+      case 17:
+      #ifdef CONFIG_ZEBRA_TRACE_BB_DASM
+        assert(zebra_trace_bb_dasm_log_path == NULL);
+        zebra_trace_bb_dasm_log_path = optarg;
+        Log("Set zebra_trace_bb_dasm_log_path to %s", zebra_trace_bb_dasm_log_path);
+        fflush(stdout);
+      #else 
+        xpanic("zebra trace bb dasm is not enabled\n");
+      #endif
+        break;
       case 6:
         // start profiling/checkpointing right after boot,
         // instead of waiting for the pseudo inst to notify NEMU.
@@ -268,6 +285,7 @@ static inline int parse_args(int argc, char *argv[]) {
 //        printf("\t--map-cpt               map to this file as pmem, which can be treated as a checkpoint.\n"); //comming back soon
 
         printf("\t--simpoint-profile      simpoint profiling\n");
+        printf("\t--zebra-trace-bb-dasm   zebra trace bb dasm log path\n");
         printf("\t--dont-skip-boot        profiling/checkpoint immediately after boot\n");
         printf("\t--mem_use_record_file   result output file for analyzing the memory use segment\n");
 //        printf("\t--cpt-id                checkpoint id\n");
@@ -309,6 +327,11 @@ void init_monitor(int argc, char *argv[]) {
   }
   /* Open the log file. */
   init_log(log_file, small_log);
+
+  /* Initialize the zebra trace bb dasm log file. */
+#ifdef CONFIG_ZEBRA_TRACE_BB_DASM 
+  zebra_trace_bb_dasm_log_init();
+#endif
 
   /* Initialize memory. */
   init_mem();

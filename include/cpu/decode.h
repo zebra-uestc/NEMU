@@ -34,7 +34,9 @@ typedef struct {
   IFDEF(CONFIG_ISA_x86, uint8_t reg);
   IFDEF(CONFIG_RVV, rtlreg_t val);
   IFDEF(CONFIG_RVV, uint8_t reg);
-  IFDEF(CONFIG_DEBUG, char str[OP_STR_SIZE]);
+#if defined(CONFIG_DEBUG) || defined(CONFIG_ZEBRA_TRACE_BB_DASM)
+  char str[OP_STR_SIZE];
+#endif
 } Operand;
 
 enum {
@@ -65,6 +67,7 @@ typedef struct Decode {
   uint8_t type;
   ISADecodeInfo isa;
   IFDEF(CONFIG_DEBUG, char logbuf[80]);
+  IFDEF(CONFIG_ZEBRA_TRACE_BB_DASM, char dasmbuf[80]);
   #ifdef CONFIG_RVV
   // for vector
   int v_width;
@@ -164,8 +167,11 @@ finish:
 #define def_INSTR_TAB(pattern, tab)         def_INSTR_IDTABW(pattern, empty, tab, 0)
 
 
-#define print_Dop(...) IFDEF(CONFIG_DEBUG, snprintf(__VA_ARGS__))
-#define print_asm(...) IFDEF(CONFIG_DEBUG, snprintf(log_asmbuf, sizeof(log_asmbuf), __VA_ARGS__))
+#if defined(CONFIG_DEBUG) || defined(CONFIG_ZEBRA_TRACE_BB_DASM)
+#define print_Dop(...) snprintf(__VA_ARGS__)
+#define print_asm(...) snprintf(log_asmbuf, sizeof(log_asmbuf), __VA_ARGS__)
+#endif
+
 
 #ifndef suffix_char
 #define suffix_char(width) ' '
