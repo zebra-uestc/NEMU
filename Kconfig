@@ -222,6 +222,10 @@ config SIMPOINT_LOG
   bool "Enable Log for simpoint profiling"
   default n
 
+config ZEBRA_BB_JUMP
+  bool "Enable feature of zebra's basic block jump"
+  default n
+
 endmenu
 
 if !MODE_USER
